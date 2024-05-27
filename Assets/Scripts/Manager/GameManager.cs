@@ -28,18 +28,18 @@ namespace Manager
             }
 
             // 初始化oculus环境
-            try
-            {
-                Core.AsyncInitialize();
-                Entitlements.IsUserEntitledToApplication().OnComplete(EntitlementCallback);
-            }
-            catch (UnityException e)
-            {
-                Debug.LogError("Platform failed to initialize due to exception.");
-                Debug.LogException(e);
-                // Immediately quit the application.
-                UnityEngine.Application.Quit();
-            }
+                try
+                {
+                    Core.AsyncInitialize();
+                    Entitlements.IsUserEntitledToApplication().OnComplete(EntitlementCallback);
+                }
+                catch (UnityException e)
+                {
+                    Debug.LogError("Platform failed to initialize due to exception.");
+                    Debug.LogException(e);
+                    // Immediately quit the application.
+                    UnityEngine.Application.Quit();
+                }
         }
 
         // Called when the Meta Quest Platform completes the async entitlement check request and a result is available.
