@@ -251,8 +251,8 @@ namespace Manager
 			//2个2条
 			_mahjongList.Add(
 				new Mahjong(11, "mahjong_tile_" + 11));
-			_mahjongList.Add(
-				new Mahjong(11, "mahjong_tile_" + 11));
+			// _mahjongList.Add(
+			// 	new Mahjong(11, "mahjong_tile_" + 11));
 			//4个3条
 			for (var j = 0; j < Tools.Constants.MaxPlayer; j++)
 			{
@@ -379,7 +379,7 @@ namespace Manager
 			}
 
 			//前面放2个2条
-			for (var j = 1; j <= 2; j++)
+			for (var j = 1; j <= 3; j++)
 			{
 				_mahjongList.Insert(0, new Mahjong(11, "mahjong_tile_" + 11));
 			}

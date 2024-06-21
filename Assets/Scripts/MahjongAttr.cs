@@ -283,8 +283,13 @@ public class MahjongAttr : MonoBehaviourPunCallbacks
         }
     }
 
+    /// <summary>
+    /// 基于碰撞检测判断玩家是否出牌成功，如果碰到桌子，说明出牌成功，否则弹回原始位置
+    /// </summary>
+    /// <param name="other"></param>
     private void OnCollisionEnter(Collision other)
     {
+        //落在桌子上
         if (other.gameObject.CompareTag("Desk"))
         {
             if (GameController.Instance.nowMahjong == gameObject)
@@ -327,6 +332,7 @@ public class MahjongAttr : MonoBehaviourPunCallbacks
                     }
 
                     gameObject.layer = LayerMask.NameToLayer("Ignore Raycast");
+                    GameController.Instance.GazeInteractor.startCount = false;
                     _photonView.RPC(nameof(PlayTile), RpcTarget.All, playerId, ID, gameObject.GetPhotonView().ViewID);
                     _photonView.RPC(nameof(RPCSetIsThrown), RpcTarget.Others, true);
                     _photonView.RPC(nameof(RPCSetInMyHand), RpcTarget.Others, false);
@@ -353,6 +359,7 @@ public class MahjongAttr : MonoBehaviourPunCallbacks
                 }
             }
         }
+        //落在地上
         else if (other.gameObject.CompareTag("Ground") && inMyHand && isPut)
         {
             GameController.Instance.SortMyMahjong(false, true);

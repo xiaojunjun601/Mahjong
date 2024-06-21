@@ -60,7 +60,7 @@ namespace Controller
         public GameObject bubbleEffect;
         public Transform[] playerPanelContainers;
         public GameObject playerPanelPrefab;
-        [SerializeField] private GazeInteractor GazeInteractor;
+        public GazeInteractor GazeInteractor;
         private static Random rng = new();
         public GameObject nowMahjong;
         public AudioTrigger changeMahjongAudio;
@@ -78,6 +78,16 @@ namespace Controller
 
         public OVRCameraRig OvrCameraRig;
         public GameObject BunnyEar;
+
+        /// <summary>
+        /// 本局游戏看牌数
+        /// </summary>
+        public int totalCount;
+
+        /// <summary>
+        /// 本局游戏回合数
+        /// </summary>
+        public int totalRound;
 
         /// <summary>
         /// 用于录制的摄像机
@@ -102,33 +112,32 @@ namespace Controller
                 Destroy(gameObject);
             }
 
+            //初始化单例
             Instance = this;
+            //初始化麻将位置
             GameManager.Instance.InitWhenStart();
+            //初始化总回合数，房主当前回合为1，其他为0
+            totalRound = PhotonNetwork.IsMasterClient ? 1 : 0;
+            //视线数据收集，房主开局就开始收集，其他玩家开局不收集
+            GazeInteractor.startCount = PhotonNetwork.IsMasterClient;
+            //总查看手牌次数开局为0
+            totalCount = 0;
+            //获取玩家个数
             _playerCount = PhotonNetwork.CurrentRoom.PlayerCount;
+            //初始化每回合的字典
             ReadyDict = new Dictionary<int, int>();
+            //初始化所有麻将的字典
             _mahjong = new List<MahjongAttr>();
             //playerButtons = new List<Transform>();
+            //开始游戏
             StartGame();
+            //初始化Avatar的委托，减少手部穿透
             FindObjectOfType<OvrAvatarManager>().GetComponent<AvatarInputManager>().Init();
         }
 
-        // public override void OnEnable()
-        // {
-        //     base.OnEnable();
-        //     var controllerSettings = ScriptableObject.CreateInstance<RecorderControllerSettings>();
-        //     _recorderControllerSettingsPreset.ApplyTo(controllerSettings);
-        //     _recorderController = new RecorderController(controllerSettings);
-        //     RecorderOptions.VerboseMode = false;
-        //     _recorderController.PrepareRecording();
-        //     _recorderController.StartRecording();
-        //     StartCoroutine(nameof(StopRecording));
-        // }
-        //
-        // private void StopRecording()
-        // {
-        //     _recorderController.StopRecording();
-        // }
-
+        /// <summary>
+        /// 退出房间
+        /// </summary>
         public override void OnLeftRoom()
         {
             PhotonNetwork.LoadLevel(1);
@@ -301,8 +310,10 @@ namespace Controller
             // scoreCanvas.SetActive(true);
             // scoreCanvas.transform.GetChild(1).GetComponentInChildren<TMP_Text>().text =
             //     id == myPlayerController.playerID ? "您赢了！" : "您输了！";
-            playerResultPanels[myPlayerController.playerID - 1].GetChild(0).GetChild(0).GetComponent<TMP_Text>().text =
-                id == myPlayerController.playerID ? "您赢了！" : "您输了！";
+            playerResultPanels[myPlayerController.playerID - 1].GetChild(0).GetChild(0).GetComponent<TMP_Text>()
+                .text = id == myPlayerController.playerID
+                ? $"您赢了！\n本局游戏您平均每次出牌前查看{totalCount / totalRound}次牌"
+                : $"您输了！\n本局游戏您平均每次出牌前查看{totalCount / totalRound}次牌";
             var i = 0;
             foreach (var playerPair in PhotonNetwork.CurrentRoom.Players)
             {
@@ -559,6 +570,8 @@ namespace Controller
 
         private void AddMahjongToHand(MahjongAttr attr)
         {
+            totalRound++;
+            GazeInteractor.startCount = true;
             attr.inMyHand = true;
             attr.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.None;
             attr.num = 1;
@@ -1379,7 +1392,7 @@ namespace Controller
         /// </summary>
         public void ShowEyeGaze()
         {
-            if (!GazeInteractor.enabled)
+            if (!GazeInteractor.startGaze)
             {
                 PlayFabClientAPI.GetUserData(new GetUserDataRequest(),
                     //在CallBack函数中打开UI，防止提前打开UI
@@ -1395,7 +1408,7 @@ namespace Controller
                             var xRayCardGo = playerCardContainers[myPlayerController.playerID - 1].GetChild(0);
                             xRayCardGo.GetComponentInChildren<TMP_Text>().text = $"透视道具\n当前拥有：{xRayCardCount}个";
                             //开启射线
-                            GazeInteractor.enabled = true;
+                            GazeInteractor.startGaze = true;
                             //20秒后关闭射线
                             StartCoroutine(nameof(HideEyeGaze));
                             PlayFabClientAPI.UpdateUserData(new UpdateUserDataRequest
@@ -1414,7 +1427,7 @@ namespace Controller
         private IEnumerator HideEyeGaze()
         {
             yield return new WaitForSeconds(20f);
-            GazeInteractor.enabled = false;
+            GazeInteractor.startGaze = false;
             foreach (var mahjong in effectGoList)
             {
                 mahjong.OnEyeHoverExit();
@@ -1438,7 +1451,6 @@ namespace Controller
                 //在CallBack函数中打开UI，防止提前打开UI
                 data =>
                 {
-                    //找到X射线卡牌的数量
                     var cheatCardCount = int.Parse(data.Data["CheatCard"].Value);
                     if (cheatCardCount > 0)
                     {
@@ -1447,10 +1459,6 @@ namespace Controller
                         //更新显示
                         var cheatCardGo = playerCardContainers[myPlayerController.playerID - 1].GetChild(1);
                         cheatCardGo.GetComponentInChildren<TMP_Text>().text = $"换牌道具\n当前拥有：{cheatCardCount}个";
-                        //开启射线
-                        GazeInteractor.enabled = true;
-                        //20秒后关闭射线
-                        StartCoroutine(nameof(HideEyeGaze));
                         PlayFabClientAPI.UpdateUserData(new UpdateUserDataRequest
                         {
                             Data = new Dictionary<string, string>
@@ -1467,7 +1475,7 @@ namespace Controller
 
         private IEnumerator Wait()
         {
-            yield return new WaitForSeconds(5f);
+            yield return new WaitForSeconds(3f);
             var id = nowMahjong.GetComponent<MahjongAttr>().ID;
             myPlayerController.mahjongMap[myPlayerController.MyMahjong[id].Count].Remove(id);
             myPlayerController.MyMahjong[id].Remove(nowMahjong);
@@ -1572,12 +1580,14 @@ namespace Controller
             playerCapturers[myPlayerController.playerID - 1].GetChild(0).gameObject.SetActive(false);
             playerCapturers[myPlayerController.playerID - 1].GetChild(1).gameObject.SetActive(true);
         }
+
         public void ToCapturer3()
         {
             StartCoroutine(nameof(ToChild3));
             // playerCapturers[myPlayerController.playerID - 1].GetChild(1).gameObject.SetActive(false);
             // playerCapturers[myPlayerController.playerID - 1].GetChild(2).gameObject.SetActive(true);
         }
+
         public IEnumerator ToChild3()
         {
             yield return new WaitForSeconds(2f);
@@ -1589,9 +1599,27 @@ namespace Controller
         {
             StartCoroutine(nameof(CoroGetReward));
         }
+
         public IEnumerator CoroGetReward()
         {
             yield return new WaitForSeconds(2f);
+            PlayFabClientAPI.GetUserData(new GetUserDataRequest(),
+                data =>
+                {
+                    var cardCount = int.Parse(data.Data["XRayCard"].Value);
+                    PlayFabClientAPI.UpdateUserData(new UpdateUserDataRequest()
+                        {
+                            Data = new Dictionary<string, string>
+                            {
+                                { "XRayCard", (cardCount + 1).ToString() }
+                            }
+                        }, _ => { },
+                        _ => { }
+                    );
+                },
+                error => { Debug.Log(error.ErrorMessage); });
+
+
             playerCanvases[myPlayerController.playerID - 1].gameObject.SetActive(false);
             playerMenus[myPlayerController.playerID - 1].gameObject.SetActive(false);
             playerResultPanels[myPlayerController.playerID - 1].gameObject.SetActive(false);
