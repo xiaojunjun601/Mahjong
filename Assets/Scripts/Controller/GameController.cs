@@ -50,6 +50,9 @@ namespace Controller
         private bool _canPong;
         private bool _canKong;
         private bool _canWin;
+        // Start Edit
+        private int[] _kongCount;
+        // End Edit
         private Button _confirmButton;
         public Material[] transparentMaterials;
         public Material[] normalMaterials;
@@ -150,6 +153,7 @@ namespace Controller
         {
             GeneratePlayers();
             GetPlayerScore();
+            _kongCount = new int[PhotonNetwork.CurrentRoom.PlayerCount];
             //房主检测是否天胡
             var isWin = PhotonNetwork.IsMasterClient && CheckWin();
             var canK = false;
@@ -317,14 +321,19 @@ namespace Controller
             var i = 0;
             foreach (var playerPair in PhotonNetwork.CurrentRoom.Players)
             {
+                // Start Edit
+                int winId = myPlayerController.playerID - 1;
+                // End Edit
                 playerResultPanels[myPlayerController.playerID - 1].GetChild(1).GetChild(i).gameObject
                     .SetActive(true);
                 playerResultPanels[myPlayerController.playerID - 1].GetChild(1).GetChild(i).GetChild(0)
                     .GetComponent<TMP_Text>().text = playerPair.Value.NickName;
                 playerResultPanels[myPlayerController.playerID - 1].GetChild(1).GetChild(i).GetChild(1)
                     .GetComponent<TMP_Text>().text = playerPair.Value.NickName == userName
-                    ? "积分 + 50"
-                    : "积分 - 50";
+                //Start Edit
+                    ? "积分 + " + (50 * (_kongCount[winId] == 0 ? 1 : _kongCount[winId] + 1) * (PhotonNetwork.CurrentRoom.PlayerCount)) 
+                    : "积分 - " + (50 * (_kongCount[winId] == 0 ? 1 : _kongCount[winId] + 1));
+                // End Edit
                 i++;
             }
 
@@ -345,9 +354,18 @@ namespace Controller
 
             int score;
             PlayFabClientAPI.GetUserData(new GetUserDataRequest { }, data =>
-                {
+                {  
+                    // Start Edit
+                    int playId = myPlayerController.playerID - 1;
+                    // End Edit
+                    
                     score = int.Parse(data.Data["Score"].Value);
-                    score = id == myPlayerController.playerID ? score + 50 : score - 50;
+                    score = id == myPlayerController.playerID ?
+                        // Start Edit
+                        score + (50 * (_kongCount[playId] == 0 ? 1 : _kongCount[playId] + 1)
+                                    * (PhotonNetwork.CurrentRoom.PlayerCount - 1))   
+                        : score - 50 * (_kongCount[playId] == 0 ? 1 : _kongCount[playId] + 1);
+                    // End Edit
                     PlayFabClientAPI.UpdateUserData(new UpdateUserDataRequest()
                         {
                             Data = new Dictionary<string, string>
@@ -1136,7 +1154,11 @@ namespace Controller
         {
             if (!_canKong) return;
             _canKong = false;
-
+            
+            // Start Edit
+            _kongCount[myPlayerController.playerID - 1]++;
+            // End Edit
+            
             //隐藏button
             photonView.RPC(nameof(ResetButton), RpcTarget.All);
             foreach (var pair in myPlayerController.MyMahjong)
