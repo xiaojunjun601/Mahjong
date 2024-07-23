@@ -31,6 +31,7 @@ namespace Manager
                 try
                 {
                     Core.AsyncInitialize();
+                    // 检查有没有权限访问你账号avatar
                     Entitlements.IsUserEntitledToApplication().OnComplete(EntitlementCallback);
                 }
                 catch (UnityException e)

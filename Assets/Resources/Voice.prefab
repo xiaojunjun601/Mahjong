@@ -53,6 +53,7 @@ MonoBehaviour:
   speakerPrefab: {fileID: 0}
   primaryRecorder: {fileID: 0}
   usePrimaryRecorder: 0
+  cppCompatibilityMode: 0
   Settings:
     AppIdRealtime: 
     AppIdFusion: 
@@ -71,7 +72,6 @@ MonoBehaviour:
     NetworkLogging: 1
   ShowSettings: 1
   AutoConnectAndJoin: 1
-  AutoLeaveAndDisconnect: 1
   usePunAppSettings: 1
   usePunAuthValues: 1
 --- !u!114 &1403184467309264334

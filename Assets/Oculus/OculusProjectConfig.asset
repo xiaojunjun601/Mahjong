@@ -21,11 +21,11 @@ MonoBehaviour:
   anchorSupport: 1
   sharedAnchorSupport: 0
   renderModelSupport: 1
-  trackedKeyboardSupport: 0
+  trackedKeyboardSupport: 1
   bodyTrackingSupport: 1
   faceTrackingSupport: 1
   eyeTrackingSupport: 1
-  virtualKeyboardSupport: 0
+  virtualKeyboardSupport: 1
   sceneSupport: 1
   disableBackups: 1
   enableNSCConfig: 1

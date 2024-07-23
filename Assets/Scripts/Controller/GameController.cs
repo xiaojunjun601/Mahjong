@@ -153,7 +153,7 @@ namespace Controller
         {
             GeneratePlayers();
             GetPlayerScore();
-            _kongCount = new int[PhotonNetwork.CurrentRoom.PlayerCount];
+            _kongCount = new int[PhotonNetwork.CurrentRoom.PlayerCount + 1];
             //房主检测是否天胡
             var isWin = PhotonNetwork.IsMasterClient && CheckWin();
             var canK = false;
@@ -321,9 +321,6 @@ namespace Controller
             var i = 0;
             foreach (var playerPair in PhotonNetwork.CurrentRoom.Players)
             {
-                // Start Edit
-                int winId = myPlayerController.playerID - 1;
-                // End Edit
                 playerResultPanels[myPlayerController.playerID - 1].GetChild(1).GetChild(i).gameObject
                     .SetActive(true);
                 playerResultPanels[myPlayerController.playerID - 1].GetChild(1).GetChild(i).GetChild(0)
@@ -331,8 +328,8 @@ namespace Controller
                 playerResultPanels[myPlayerController.playerID - 1].GetChild(1).GetChild(i).GetChild(1)
                     .GetComponent<TMP_Text>().text = playerPair.Value.NickName == userName
                 //Start Edit
-                    ? "积分 + " + (50 * (_kongCount[winId] == 0 ? 1 : _kongCount[winId] + 1) * (PhotonNetwork.CurrentRoom.PlayerCount)) 
-                    : "积分 - " + (50 * (_kongCount[winId] == 0 ? 1 : _kongCount[winId] + 1));
+                    ? "积分 + " + (50 * (_kongCount[id] == 0 ? 1 : _kongCount[id] + 1) * (PhotonNetwork.CurrentRoom.PlayerCount)) 
+                    : "积分 - " + (50 * (_kongCount[id] == 0 ? 1 : _kongCount[id] + 1));
                 // End Edit
                 i++;
             }
@@ -355,16 +352,14 @@ namespace Controller
             int score;
             PlayFabClientAPI.GetUserData(new GetUserDataRequest { }, data =>
                 {  
-                    // Start Edit
-                    int playId = myPlayerController.playerID - 1;
-                    // End Edit
                     
                     score = int.Parse(data.Data["Score"].Value);
                     score = id == myPlayerController.playerID ?
                         // Start Edit
-                        score + (50 * (_kongCount[playId] == 0 ? 1 : _kongCount[playId] + 1)
-                                    * (PhotonNetwork.CurrentRoom.PlayerCount - 1))   
-                        : score - 50 * (_kongCount[playId] == 0 ? 1 : _kongCount[playId] + 1);
+                        score + (50 * (_kongCount[id] == 0 ? 1 : _kongCount[id] + 1)
+                                    * (PhotonNetwork.CurrentRoom.PlayerCount))   
+                        : score - 50 * (_kongCount[id] == 0 ? 1 : _kongCount[id] + 1);
+                    Debug.Log($"Now score:{score}");
                     // End Edit
                     PlayFabClientAPI.UpdateUserData(new UpdateUserDataRequest()
                         {
@@ -1156,7 +1151,7 @@ namespace Controller
             _canKong = false;
             
             // Start Edit
-            _kongCount[myPlayerController.playerID - 1]++;
+            _kongCount[myPlayerController.playerID]++;
             // End Edit
             
             //隐藏button
