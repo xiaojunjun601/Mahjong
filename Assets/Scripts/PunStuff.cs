@@ -97,7 +97,7 @@ public class PunStuff : MonoBehaviourPunCallbacks
 	private void Awake()
 	{
 		//ipAddressInputField.text = PlayerPrefs.GetString(IPAddressKey, "192.168.137.1");
-		userNameInputField.text = PlayerPrefs.GetString(UserNameKey, "LuoZhu");
+		userNameInputField.text = PlayerPrefs.GetString(UserNameKey, "FuJun");
 		//emailInputField.text=PlayerPrefs.GetString(UserNameKey, "718366079@qq.com");
 		GameManager.Instance.AddMenu(LoadingMenuName, loadingMenu);
 		GameManager.Instance.AddMenu(TitleMenuName, titleMenu);

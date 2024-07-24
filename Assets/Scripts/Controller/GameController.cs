@@ -51,7 +51,7 @@ namespace Controller
         private bool _canKong;
         private bool _canWin;
         // Start Edit
-        private int[] _kongCount;
+        private int _kongCount;
         // End Edit
         private Button _confirmButton;
         public Material[] transparentMaterials;
@@ -153,7 +153,7 @@ namespace Controller
         {
             GeneratePlayers();
             GetPlayerScore();
-            _kongCount = new int[PhotonNetwork.CurrentRoom.PlayerCount + 1];
+            _kongCount = 0;
             //房主检测是否天胡
             var isWin = PhotonNetwork.IsMasterClient && CheckWin();
             var canK = false;
@@ -279,7 +279,7 @@ namespace Controller
         }
 
         [PunRPC]
-        private void SetPoint(int id, string userName)
+        private void SetPoint(int id, string userName, int kongCount)
         {
             foreach (var mahjong in FindObjectsOfType<MahjongAttr>())
             {
@@ -328,8 +328,8 @@ namespace Controller
                 playerResultPanels[myPlayerController.playerID - 1].GetChild(1).GetChild(i).GetChild(1)
                     .GetComponent<TMP_Text>().text = playerPair.Value.NickName == userName
                 //Start Edit
-                    ? "积分 + " + (50 * (_kongCount[id] == 0 ? 1 : _kongCount[id] + 1) * (PhotonNetwork.CurrentRoom.PlayerCount)) 
-                    : "积分 - " + (50 * (_kongCount[id] == 0 ? 1 : _kongCount[id] + 1));
+                    ? "积分 + " + (50 * (kongCount == 0 ? 1 : kongCount + 1) * (PhotonNetwork.CurrentRoom.PlayerCount - 1)) 
+                    : "积分 - " + (50 * (kongCount == 0 ? 1 : kongCount + 1));
                 // End Edit
                 i++;
             }
@@ -354,11 +354,10 @@ namespace Controller
                 {  
                     
                     score = int.Parse(data.Data["Score"].Value);
-                    score = id == myPlayerController.playerID ?
+                    score = id == myPlayerController.playerID 
                         // Start Edit
-                        score + (50 * (_kongCount[id] == 0 ? 1 : _kongCount[id] + 1)
-                                    * (PhotonNetwork.CurrentRoom.PlayerCount))   
-                        : score - 50 * (_kongCount[id] == 0 ? 1 : _kongCount[id] + 1);
+                        ? score + (50 * (kongCount == 0 ? 1 : kongCount + 1) * (PhotonNetwork.CurrentRoom.PlayerCount - 1))   
+                        : score - (50 * (kongCount == 0 ? 1 : kongCount + 1));
                     Debug.Log($"Now score:{score}");
                     // End Edit
                     PlayFabClientAPI.UpdateUserData(new UpdateUserDataRequest()
@@ -541,7 +540,7 @@ namespace Controller
         private void SolveWin()
         {
             photonView.RPC(nameof(SetPoint), RpcTarget.All, myPlayerController.playerID,
-                PhotonNetwork.LocalPlayer.NickName);
+                PhotonNetwork.LocalPlayer.NickName, _kongCount);
         }
 
         /// <summary>
@@ -1151,7 +1150,7 @@ namespace Controller
             _canKong = false;
             
             // Start Edit
-            _kongCount[myPlayerController.playerID]++;
+            _kongCount++;
             // End Edit
             
             //隐藏button
