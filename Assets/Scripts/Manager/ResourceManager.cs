@@ -177,6 +177,11 @@ namespace Manager
 
 		/// <summary>
 		/// 新创建房间或者房主改变，房主重新生成麻将
+		/// id: 1 - 9 ， 一万  --九万
+		/// id: 10 - 18，  一饼 -- 九饼 
+		/// id: 19 - 27,  一条 --九条
+		/// id 28 - 31, 東南西北
+		/// id 32 - 34， 白板发财红中
 		/// </summary>
 		public void LoadMahjong()
 		{
@@ -294,7 +299,7 @@ namespace Manager
 					new Mahjong(18, "mahjong_tile_" + 18));
 			}
 
-			//1个4条
+			//1个一桶
 			_mahjongList.Add(
 				new Mahjong(19, "mahjong_tile_" + 19));
 
@@ -372,13 +377,13 @@ namespace Manager
 			}
 
 			_mahjongList = _mahjongList.OrderBy(_ => rng.Next()).ToList();
-			//前面放三个1万
+			//前面放三个1条
 			for (var j = 1; j <= 3; j++)
 			{
 				_mahjongList.Insert(0, new Mahjong(1, "mahjong_tile_" + 1));
 			}
 
-			//前面放2个2条
+			//前面放3个2饼
 			for (var j = 1; j <= 3; j++)
 			{
 				_mahjongList.Insert(0, new Mahjong(11, "mahjong_tile_" + 11));
@@ -388,13 +393,13 @@ namespace Manager
 			//     _mahjongList.Insert(0, new Mahjong(11, "mahjong_tile_" + 11));
 			// }
 
-			//前面放三个4条
+			//前面放三个4饼
 			for (var j = 1; j <= 3; j++)
 			{
 				_mahjongList.Insert(0, new Mahjong(13, "mahjong_tile_" + 13));
 			}
 
-			//前面放三个1饼
+			//前面放三个1条
 			for (var j = 1; j <= 3; j++)
 			{
 				_mahjongList.Insert(0, new Mahjong(19, "mahjong_tile_" + 19));

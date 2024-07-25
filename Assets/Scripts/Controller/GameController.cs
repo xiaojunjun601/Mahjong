@@ -1363,43 +1363,82 @@ namespace Controller
             // }
             //
             // return isHu(cards);
-            var cnt2 = 0;
-            var cnt3 = 0;
-            var cnt4 = 0;
+            return StraightAndSame(id);
+        }
+
+        
+        /// <summary>
+        /// 手牌组合包括顺子（3张牌），三个相同四个相同，以及一对牌的混合模式
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        private bool StraightAndSame(int id = 0)
+        {
+            var tileCounts = new Dictionary<int, int>();
+
+            // 统计每种牌的数量
             foreach (var item in myPlayerController.MyMahjong)
             {
-                if (item.Key == id)
+                int tileType = item.Key;
+                int tileCount = item.Value.Count;
+
+                if (tileCounts.ContainsKey(tileType))
                 {
-                    if (item.Value.Count == 1)
-                    {
-                        cnt2++;
-                    }
-                    else if (item.Value.Count == 2)
-                    {
-                        cnt3++;
-                    }
-                    else if (item.Value.Count == 3)
-                    {
-                        cnt4++;
-                    }
+                    tileCounts[tileType] += tileCount;
                 }
                 else
                 {
-                    if (item.Value.Count == 3)
-                    {
-                        cnt3++;
-                    }
-                    else if (item.Value.Count == 4)
-                    {
-                        cnt4++;
-                    }
-                    else if (item.Value.Count == 2)
-                    {
-                        cnt2++;
-                    }
+                    tileCounts[tileType] = tileCount;
                 }
             }
 
+            // 增加新摸的牌
+            if (tileCounts.ContainsKey(id))
+            {
+                tileCounts[id]++;
+            }
+            else
+            {
+                tileCounts[id] = 1;
+            }
+
+            var cnt2 = 0; // 对子数
+            var cnt3 = 0; // 刻子数
+            var cnt4 = 0; // 杠数
+
+            // 处理顺子
+            foreach (var key in tileCounts.Keys.OrderBy(x => x).ToList())
+            {
+                while (tileCounts[key] > 0 && tileCounts.ContainsKey(key + 1) && tileCounts.ContainsKey(key + 2) &&
+                       tileCounts[key + 1] > 0 && tileCounts[key + 2] > 0)
+                {
+                    tileCounts[key]--;
+                    tileCounts[key + 1]--;
+                    tileCounts[key + 2]--;
+                    cnt3++; // 顺子也算作3个牌的组合
+                }
+            }
+
+            // 统计对子、刻子和杠的数量
+            foreach (var count in tileCounts.Values)
+            {
+                if (count == 2)
+                {
+                    cnt2++;
+                }
+                else if (count == 3)
+                {
+                    cnt3++;
+                }
+                else if (count == 4)
+                {
+                    cnt4++;
+                }
+            }
+
+            // 判断是否胡牌
+            // 标准胡牌条件：4个刻子或顺子或杠 + 1个对子
+            // 七对胡牌条件：7个对子
             return (cnt2 + cnt3 + cnt4 == 5 && cnt2 == 1) || cnt2 == 7;
         }
 
