@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -996,11 +997,13 @@ namespace Controller
                     }
                 }
             }
+            
 
             for (var i = 4; i >= 1; i--)
             {
                 myPlayerController.mahjongMap.TryGetValue(i, out var list);
                 if (list == null) continue;
+                list.Sort();
                 foreach (var index in list)
                 {
                     foreach (var go in myPlayerController.MyMahjong[index])
@@ -1010,14 +1013,14 @@ namespace Controller
                         {
                             continue;
                         }
-
+            
                         BoxCollider boxCollider = null;
                         if (disableCollider)
                         {
                             boxCollider = go.GetComponent<BoxCollider>();
                             boxCollider.enabled = false;
                         }
-
+            
                         script.num = num++;
                         var t = DOTween.Sequence()
                             .Insert(0f,
@@ -1327,54 +1330,20 @@ namespace Controller
         /// <returns></returns>
         private bool CheckWin(int id = 0)
         {
-            // List<Card> cards = new List<Card>();
-            // //var cards = new Card[14];
-            // if (id == 0)
-            // {
-            //     var i = 0;
-            //     foreach (var pair in myPlayerController.MyMahjong)
-            //     {
-            //         for (var j = 0; j < pair.Value.Count; j++)
-            //         {
-            //             cards.Add(new Card(pair.Key - pair.Key / 9 * 9, pair.Key / 9));
-            //             //cards[i++] =
-            //         }
-            //     }
-            // }
-            // else
-            // {
-            //     if (!myPlayerController.MyMahjong.ContainsKey(id))
-            //     {
-            //         myPlayerController.MyMahjong[id] = new List<GameObject>();
-            //     }
-            //
-            //     var go = new GameObject();
-            //     myPlayerController.MyMahjong[id].Add(go);
-            //     var i = 0;
-            //     foreach (var pair in myPlayerController.MyMahjong)
-            //     {
-            //         for (var j = 0; j < pair.Value.Count; j++)
-            //         {
-            //             cards.Add(new Card(pair.Key - pair.Key / 9 * 9, pair.Key / 9));
-            //         }
-            //     }
-            //
-            //     myPlayerController.MyMahjong[id].Remove(go);
-            // }
-            //
-            // return isHu(cards);
-            return StraightAndSame(id);
+            
+            return CanWin(id);
         }
-
         
+
         /// <summary>
         /// 手牌组合包括顺子（3张牌），三个相同四个相同，以及一对牌的混合模式
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        private bool StraightAndSame(int id = 0)
+        private bool CanWin(int id = 0)
         {
             var tileCounts = new Dictionary<int, int>();
+            int cnt2 = 0;
 
             // 统计每种牌的数量
             foreach (var item in myPlayerController.MyMahjong)
@@ -1402,46 +1371,87 @@ namespace Controller
                 tileCounts[id] = 1;
             }
 
-            var cnt2 = 0; // 对子数
-            var cnt3 = 0; // 刻子数
-            var cnt4 = 0; // 杠数
-
-            // 处理顺子
-            foreach (var key in tileCounts.Keys.OrderBy(x => x).ToList())
+            // 尝试将每种牌作为对子，检查剩余牌是否可以组成顺子或刻子
+            foreach (var pair in tileCounts.Keys.ToList())
             {
-                while (tileCounts[key] > 0 && tileCounts.ContainsKey(key + 1) && tileCounts.ContainsKey(key + 2) &&
-                       tileCounts[key + 1] > 0 && tileCounts[key + 2] > 0)
-                {
-                    tileCounts[key]--;
-                    tileCounts[key + 1]--;
-                    tileCounts[key + 2]--;
-                    cnt3++; // 顺子也算作3个牌的组合
-                }
-            }
-
-            // 统计对子、刻子和杠的数量
-            foreach (var count in tileCounts.Values)
-            {
-                if (count == 2)
+                if (tileCounts[pair] >= 2)
                 {
                     cnt2++;
-                }
-                else if (count == 3)
-                {
-                    cnt3++;
-                }
-                else if (count == 4)
-                {
-                    cnt4++;
+                    // 移除一对牌
+                    tileCounts[pair] -= 2;
+
+                    // 检查剩余牌是否可以组成顺子或刻子
+                    if (IsWinningHand(tileCounts))
+                    {
+                        return true;
+                    }
+
+                    // 还原一对牌
+                    tileCounts[pair] += 2;
                 }
             }
 
-            // 判断是否胡牌
-            // 标准胡牌条件：4个刻子或顺子或杠 + 1个对子
-            // 七对胡牌条件：7个对子
-            return (cnt2 + cnt3 + cnt4 == 5 && cnt2 == 1) || cnt2 == 7;
+            return cnt2 == 7;
         }
 
+        /// <summary>
+        /// 检查剩余牌是否可以组成顺子或刻子
+        /// </summary>
+        /// <param name="tileCounts"></param>
+        /// <returns></returns>
+        private bool IsWinningHand(Dictionary<int, int> tileCounts)
+        {
+            var counts = new Dictionary<int, int>(tileCounts);
+
+            foreach (var key in counts.Keys.OrderBy(x => x).ToList())
+            {
+                
+                if (counts[key] >= 3)
+                {
+                    counts[key] = 0;
+                    continue;
+                }
+                // 处理顺子
+                if (key <= 7 || (key >= 10 && key <= 16) || (key >= 19 && key <= 25) || key == 32)
+                {  
+                    while (counts[key] > 0 && counts.ContainsKey(key + 1) && counts.ContainsKey(key + 2) &&
+                           counts[key + 1] > 0 && counts[key + 2] > 0)
+                    {
+                        counts[key]--;
+                        counts[key + 1]--;
+                        counts[key + 2]--;
+                    }
+                }
+                
+            }
+            
+            // 处理東南西北风
+            int[] fengTiles = { 28, 29, 30, 31 };
+            for (int i = 0; i < fengTiles.Length - 2; i++)
+            {
+                for (int j = i + 1; j < fengTiles.Length - 1; j++)
+                {
+                    for (int k = j + 1; k < fengTiles.Length; k++)
+                    {
+                        if (counts.ContainsKey(fengTiles[i]) && counts.ContainsKey(fengTiles[j]) && counts.ContainsKey(fengTiles[k]) &&
+                            counts[fengTiles[i]] > 0 && counts[fengTiles[j]] > 0 && counts[fengTiles[k]] > 0)
+                        {
+                            counts[fengTiles[i]]--;
+                            counts[fengTiles[j]]--;
+                            counts[fengTiles[k]]--;
+                        }
+                    }
+                }
+            }
+            
+            
+
+            // 如果所有牌都被移除，则胡牌成功
+            return counts.Values.All(count => count == 0);
+        }
+
+        
+        
         /// <summary>
         /// 开启眼动追踪，实现透视效果
         /// </summary>

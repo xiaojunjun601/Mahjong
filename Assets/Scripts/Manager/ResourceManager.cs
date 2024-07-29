@@ -420,9 +420,22 @@ namespace Manager
 			_mahjongList.Insert(0, new Mahjong(21, "mahjong_tile_" + 21));
 			//_mahjongList.Insert(0, new Mahjong(21, "mahjong_tile_" + 21));
 			_mahjongList.Insert(0, new Mahjong(25, "mahjong_tile_" + 25));
+			GenerationMahjong();
 			_mahjongList = _mahjongList.ToList();
 		}
 
+		public void GenerationMahjong()
+		{
+			_mahjongList.Clear();
+			for (int i = 1; i <= 34; i++)
+			{
+				for (int j = 0; j < 4; j++)
+				{
+					_mahjongList.Add(new Mahjong(i, "mahjong_tile_" + i));
+				}
+			}
+			_mahjongList = _mahjongList.OrderBy(_ => rng.Next()).ToList();
+		}
 		public void ClearMahjong()
 		{
 			_mahjongList.Clear();
