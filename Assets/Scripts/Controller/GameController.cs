@@ -1337,6 +1337,7 @@ namespace Controller
 
         /// <summary>
         /// 手牌组合包括顺子（3张牌），三个相同四个相同，以及一对牌的混合模式
+        /// 采用对子法判断能够胡牌
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
@@ -1447,7 +1448,7 @@ namespace Controller
             
 
             // 如果所有牌都被移除，则胡牌成功
-            return counts.Values.All(count => count == 0);
+            return counts.Values.All(cnt => cnt == 0);
         }
 
         
