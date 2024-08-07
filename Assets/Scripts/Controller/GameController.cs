@@ -1365,7 +1365,14 @@ namespace Controller
             // 增加新摸的牌
             if (tileCounts.ContainsKey(id))
             {
-                tileCounts[id]++;
+                if (IsMajhongPongedOrKonged(id)) // 新加入的牌之前是被碰的，那么新牌只能单独用，提前清除被碰的三张牌
+                {
+                   tileCounts[id] = 1;
+                }
+                else
+                {
+                    tileCounts[id]++;
+                }
             }
             else
             {
@@ -1375,8 +1382,16 @@ namespace Controller
             // 尝试将每种牌作为对子，检查剩余牌是否可以组成顺子或刻子
             foreach (var pair in tileCounts.Keys.ToList())
             {
+                
                 if (tileCounts[pair] >= 2)
-                {
+                {   
+                    // 碰过或者杠过的不能拆开 直接删掉
+                    if (IsMajhongPongedOrKonged(pair))
+                    {
+                        tileCounts[pair] = 0;
+                        continue;
+                    }
+                    
                     cnt2++;
                     // 移除一对牌
                     tileCounts[pair] -= 2;
@@ -1407,10 +1422,10 @@ namespace Controller
             foreach (var key in counts.Keys.OrderBy(x => x).ToList())
             {
                 
-                if (counts[key] >= 3)
+                if (counts[key] >= 3) 
                 {
-                    counts[key] = 0;
-                    continue;
+                    counts[key] -= 3;
+                    if (counts[key] == 0) continue;
                 }
                 // 处理顺子
                 if (key <= 7 || (key >= 10 && key <= 16) || (key >= 19 && key <= 25) || key == 32)
@@ -1451,7 +1466,15 @@ namespace Controller
             return counts.Values.All(cnt => cnt == 0);
         }
 
-        
+        /// <summary>
+        /// 返回麻将是否被碰过或者杠过
+        /// </summary>
+        /// <param name="id"></param>
+        public bool IsMajhongPongedOrKonged(int id)
+        {
+            var mahjongAttr = myPlayerController.MyMahjong[id][0].GetComponent<MahjongAttr>();
+            return mahjongAttr.isPonged || mahjongAttr.isKonged;
+        }
         
         /// <summary>
         /// 开启眼动追踪，实现透视效果
