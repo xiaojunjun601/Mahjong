@@ -1365,14 +1365,15 @@ namespace Controller
             // 增加新摸的牌
             if (tileCounts.ContainsKey(id))
             {
-                if (IsMajhongPongedOrKonged(id)) // 新加入的牌之前是被碰的，那么新牌只能单独用，提前清除被碰的三张牌
-                {
-                   tileCounts[id] = 1;
-                }
-                else
-                {
-                    tileCounts[id]++;
-                }
+                // if (IsMajhongPongedOrKonged(id)) // 新加入的牌之前是被碰的，那么新牌只能单独用，提前清除被碰的三张牌
+                // {
+                //    tileCounts[id] = 1;
+                // }
+                // else
+                // {
+                //     tileCounts[id]++;
+                // }
+                tileCounts[id]++;
             }
             else
             {
@@ -1386,12 +1387,12 @@ namespace Controller
                 if (tileCounts[pair] >= 2)
                 {   
                     // 碰过或者杠过的不能拆开 直接删掉
-                    if (IsMajhongPongedOrKonged(pair))
-                    {
-                        tileCounts[pair] = 0;
-                        continue;
-                    }
-                    
+                    // if (IsMajhongPongedOrKonged(pair))
+                    // {
+                    //     tileCounts[pair] = 0;
+                    //     continue;
+                    // }
+                    //
                     cnt2++;
                     // 移除一对牌
                     tileCounts[pair] -= 2;
